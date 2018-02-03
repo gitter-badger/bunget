@@ -13,7 +13,7 @@ cmake_minimum_required (VERSION 2.6)
 
 include_directories ("./include")
 
-add_definitions(-DDEBUG)
+#add_definitions(-DDEBUG)
 add_definitions(-DACL_MTU_FRAG)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ggdb")
