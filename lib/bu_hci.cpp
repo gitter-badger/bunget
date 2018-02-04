@@ -14,6 +14,9 @@
 #include "bu_hci.h"
 #include "libbungetpriv.h"
 #include <iostream>
+#ifndef __TRACE_H_
+#include "trace.h"
+#endif
 
 /****************************************************************************************
 */
@@ -78,7 +81,7 @@ bool bu_hci::start(int delay)
 */
 void bu_hci::_set_hci_filter()
 {
-    TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) TRACE(__FUNCTION__);
 
     struct  _PAACK8
     {
@@ -104,10 +107,12 @@ void bu_hci::_set_hci_filter()
         btohs(1 << (EVT_LE_META_EVENT - 32)),
         0
     };
-#ifdef DEBUG
-    bybuff by((const uint8_t*)&filter, sizeof(filter));
-    TRACE("[]<=" << by.to_string());
-#endif
+
+    if(is_tracing(kTraceGory)) {
+      bybuff by((const uint8_t*)&filter, sizeof(filter));
+      TRACE("[]<=" << by.to_string());
+    }
+
     _socket->set_filter((const uint8_t*)&filter, sizeof(filter));
 }
 
@@ -115,7 +120,8 @@ void bu_hci::_set_hci_filter()
 */
 void bu_hci::_set_event_mask()
 {
-    TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) TRACE(__FUNCTION__);
+
     struct  _PAACK8
     {
         hcihr   _hcihr;
@@ -146,7 +152,9 @@ void bu_hci::_set_event_mask()
 */
 void bu_hci::_set_le_event_mask()
 {
-    _TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) {
+      _TRACE(__FUNCTION__);
+    }
     struct  _PAACK8
     {
         hcihr   _hcihr;
@@ -177,7 +185,9 @@ void bu_hci::_set_le_event_mask()
 */
 void bu_hci::_read_version()
 {
-    _TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) {
+      _TRACE(__FUNCTION__);
+    }
     hcihr   cmd =
     {
         HCI_COMMAND_PKT,
@@ -191,7 +201,9 @@ void bu_hci::_read_version()
 */
 void bu_hci::_read_baddr()
 {
-    _TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) {
+      _TRACE(__FUNCTION__);
+    }
     hcihr   cmd =
     {
         HCI_COMMAND_PKT,
@@ -205,7 +217,10 @@ void bu_hci::_read_baddr()
 */
 void bu_hci::_write_le_host()
 {
-    _TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) {
+      _TRACE(__FUNCTION__);
+    }
+
     struct  _PAACK8
     {
         hcihr                       hdr;
@@ -539,7 +554,7 @@ int bu_hci::on_sock_data(uint8_t code, const sdata& buffer) //received
     uint16_t blen = buffer.len;
     std::string scase="NOT HANDLED ";
     bybuff  trace(buffer.data, buffer.len);
-    TRACE("{-->["<< int(buffer.len) <<"]"<< trace.to_string());
+    if(is_tracing(kTraceGory)) TRACE("{-->["<< int(buffer.len) <<"]"<< trace.to_string());
 
     if (HCI_EVENT_PKT == eventType)
     {
@@ -602,13 +617,13 @@ int bu_hci::on_sock_data(uint8_t code, const sdata& buffer) //received
 					uint16_t ogf = CMD_OPCODE_OGF(pevs->opcode);
 					uint16_t ocf = CMD_OPCODE_OCF(pevs->opcode);
 
-                    TRACE("CMD_STATUS status:" <<int(pevs->status)<<" ncmd:" <<
-												 int(pevs->ncmd) << " opcode(C/G):" <<
-												 std::hex<<int(ocf) <<"/"<<int(ogf) << std::dec);
-					if(ocf == OCF_EXIT_PERIODIC_INQUIRY)
-					{
-						//send_cmd(OCF_INQUIRY_CANCEL, OGF_LINK_CTL,0,0);
-					}
+                    if(is_tracing(kTraceGory)) TRACE("CMD_STATUS status:" <<int(pevs->status)<<" ncmd:" <<
+                        int(pevs->ncmd) << " opcode(C/G):" <<
+                        std::hex<<int(ocf) <<"/"<<int(ogf) << std::dec);
+                        if(ocf == OCF_EXIT_PERIODIC_INQUIRY)
+                        {
+                                //send_cmd(OCF_INQUIRY_CANCEL, OGF_LINK_CTL,0,0);
+                        }
 
                 }
                 break;
@@ -616,7 +631,7 @@ int bu_hci::on_sock_data(uint8_t code, const sdata& buffer) //received
                 scase="EVT_REMOTE_NAME_REQ_COMPLETE";
                 {
                     evt_remote_name_req_complete* pnc = (evt_remote_name_req_complete*)(buffer.data+4);
-                    TRACE("remote name: " << pnc->name);
+                    if(is_tracing(kTraceGory)) TRACE("remote name: " << pnc->name);
                 }
                 break;
 #ifdef ACL_MTU_FRAG
@@ -738,7 +753,6 @@ int bu_hci::on_sock_data(uint8_t code, const sdata& buffer) //received
     else{
        _TRACE("!!!  NO KNOWN on_sock_data EVENTTYPE " << std::hex << int(eventType) << std::dec );
     }
-    //TRACE("HCI: " << scase << "    }");
     return true;
 }
 
@@ -869,7 +883,7 @@ void bu_hci::_oncmd_complette(const no_evt_cmd_complete* nevcc)
                 } else {
                     _aclMtu=mtu;
                     _aclPendingMax=maxmtu;
-                    TRACE("OCF_LE_READ_BUFFER_SIZE: mtu=" << int(_aclMtu) << ", pendingMax=" << int(maxmtu));
+                    if(is_tracing(kTraceGory)) TRACE("OCF_LE_READ_BUFFER_SIZE: mtu=" << int(_aclMtu) << ", pendingMax=" << int(maxmtu));
                 }
             }
             break;
@@ -882,7 +896,7 @@ void bu_hci::_oncmd_complette(const no_evt_cmd_complete* nevcc)
                     if(mtu && maxmtu){
                         _aclMtu=mtu;
                         _aclPendingMax=maxmtu;
-                        TRACE("OCF_READ_BUFFER_SIZE: mtu=" << int(_aclMtu) << ", pendingMax=" << int(maxmtu));
+                        if(is_tracing(kTraceGory)) TRACE("OCF_READ_BUFFER_SIZE: mtu=" << int(_aclMtu) << ", pendingMax=" << int(maxmtu));
                     }
                 }
             }
@@ -980,15 +994,16 @@ void bu_hci::_onle_complette(const no_evt_le_meta_event* leme)
     char bsttr[32];
     ba2str(&addr, bsttr);
 
-    TRACE("cc HANDLE = " << (int)handle);
-    TRACE("cc role = " << (int)role);
-    TRACE("cc address type = " << (int)addressType);
-    TRACE("cc address = " << (const char*)bsttr);
-    TRACE("cc interval = " << (int)interval);
-    TRACE("cc latency = " << (int)latency);
-    TRACE("cc supervision timeout = " << (int)supervisionTimeout);
-    TRACE("cc master clock accuracy = " << (int)masterClockAccuracy);
-
+    if(is_tracing(kTraceGory)) {
+        TRACE("cc HANDLE = " << (int)handle);
+        TRACE("cc role = " << (int)role);
+        TRACE("cc address type = " << (int)addressType);
+        TRACE("cc address = " << (const char*)bsttr);
+        TRACE("cc interval = " << (int)interval);
+        TRACE("cc latency = " << (int)latency);
+        TRACE("cc supervision timeout = " << (int)supervisionTimeout);
+        TRACE("cc master clock accuracy = " << (int)masterClockAccuracy);
+    }
     _erase_AclOut(handle);
     _pev->on_le_connected(leme->leMetaEventStatus, handle, role, addressType, addr,
                             interval, latency, supervisionTimeout, masterClockAccuracy);
@@ -1004,10 +1019,12 @@ void bu_hci::_onle_con_update_complette(const no_evt_le_meta_event* leme)
     uint16_t latency = oa2t<uint16_t>(leme->data,4); // TODO: multiplier?
     int supervisionTimeout = oa2t<uint16_t>(leme->data,6) * 10;
 
-    TRACE("uu handle = " << handle);
-    TRACE("uu interval = " << interval);
-    TRACE("uu latency = " << latency);
-    TRACE("uu supervision timeout = " << supervisionTimeout);
+    if(is_tracing(kTraceGory)) {
+        TRACE("uu handle = " << handle);
+        TRACE("uu interval = " << interval);
+        TRACE("uu latency = " << latency);
+        TRACE("uu supervision timeout = " << supervisionTimeout);   
+    }
     _pev->on_le_conn_update_complette_shit(leme->leMetaEventStatus,handle, interval, latency, supervisionTimeout);
 }
 
@@ -1094,8 +1111,10 @@ int bu_hci::_poolsocket(int msecs, int callmain)
 */
 void bu_hci::_reconfigure()
 {
-    TRACE("==========================");
-    TRACE(__FUNCTION__);
+    if(is_tracing(kTraceGory)) {
+      TRACE("==========================");
+      TRACE(__FUNCTION__);
+    }
     this->_clear();
     this->_set_hci_filter();
     this->_set_event_mask();
@@ -1116,16 +1135,10 @@ void bu_hci::_reconfigure()
 
 void bu_hci::enque_acl(uint16_t handle, uint16_t cid, const sdata& sd)
 {
-    TRACE("::"<<__FUNCTION__);
+    if(is_tracing(kTraceGory)) TRACE("::"<<__FUNCTION__);
 
     bybuff   aclbuf;
     uint16_t hf = (handle | (ACL_START_NO_FLUSH << 12));
-
-#ifdef DEBUG
-    //bybuff tr(sd.data, sd.len);
-    //TRACE("toQ: handle:" << int(handle) << ", cid: " << int(cid));
-    //TRACE("toQ: [" <<int(tr.length())<<"]" << tr.to_string());
-#endif // DEBUG
 
     aclbuf << uint16_t(sd.len);
     aclbuf << uint16_t(cid);
@@ -1149,11 +1162,8 @@ void bu_hci::enque_acl(uint16_t handle, uint16_t cid, const sdata& sd)
         len -= tocpy;
         std::deque<AclChunk>& r = _aclOut[handle];
         r.push_back(a);
-      //  TRACE("Adding hander " << int(handle));
     }
 
-   // TRACE("\nin Q: [" <<int(aclbuf.length())<<"]" << aclbuf.to_string());
-   // TRACE("Queue: " << _aclOut.size() << " of "<<_aclOut[handle].size() << " chunks");
     flush_acl();
 }
 
@@ -1174,7 +1184,7 @@ void bu_hci::write_acl_chunk(uint16_t handle)
     std::deque<AclChunk>& dq = _aclOut[handle];
     if(dq.size())
     {
-	TRACE(__FUNCTION__);
+	if(is_tracing(kTraceGory)) TRACE(__FUNCTION__);
 
         if(_aclPending.find(handle) == _aclPending.end())
             _aclPending[handle]=0;

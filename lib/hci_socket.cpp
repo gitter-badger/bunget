@@ -307,8 +307,12 @@ bool hci_socket_ble::pool(int ttp, bool callhci)
         FD_CLR (_sock, &read);
         if(_bytes)
 	    _notify_read();
-        if(callhci)
-	    _hci->onSpin(this);
+        if(callhci) {
+            bool onSpin = _hci->onSpin(this);
+            if(!onSpin) {
+                return(false);
+            }
+        }
     }while(--ttp>0);
     return got;
 }

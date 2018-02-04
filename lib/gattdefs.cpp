@@ -15,6 +15,10 @@
 #include "gattdefs.h"
 #include "libbungetpriv.h"
 
+#ifndef TRACE_H_
+#include "trace.h"
+#endif
+
 /****************************************************************************************
 */
 IHandler*    GattSrv::add_charact(uint16_t uid, uint8_t props, uint8_t secure, uint8_t format, uint8_t length, uint8_t *val)
@@ -132,15 +136,16 @@ const bt_uuid_t&   GattSrv::get_uid()const
     return _cuid._u128;
 }
 
-void        GattSrv::debug()
+void GattSrv::debug()
 {
-    TRACE("---------------------------------");
-    TRACE("service" << _name);
-    uint16_t uid = this->_cuid.as16();
-    TRACE("UUID:"<< std::hex <<  uid << std::dec);
-    TRACE("LAST HANDLE:"<< _lasthndl);
-    TRACE("HANDLE:"<< _hndl);
-
+    if(is_tracing(kTraceGory)) {
+        TRACE("---------------------------------");
+        TRACE("service" << _name);
+        uint16_t uid = this->_cuid.as16();
+        TRACE("UUID:"<< std::hex <<  uid << std::dec);
+        TRACE("LAST HANDLE:"<< _lasthndl);
+        TRACE("HANDLE:"<< _hndl);
+    }
 }
 
 /****************************************************************************************

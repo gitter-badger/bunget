@@ -266,7 +266,9 @@ hci0:  Type: BR/EDR  Bus: USB
 # argument for hci0 is 0, for hci1 is 1 and so on
 # therefore we run bunget server as:
 
-sudo ./bunget 0
+sudo BUNGET_TRACE=1 ./bin/bunget 0  # for detailed trace logs
+sudo BUNGET_TRACE=0 ./bin/bunget 0  # for minimal trace logs
+
 ```
 
 # Example session

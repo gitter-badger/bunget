@@ -16,6 +16,10 @@
 #include "ascon.h"
 #include "libbungetpriv.h"
 
+#ifndef TRACE_H_
+#include "trace.h"
+#endif
+
 /****************************************************************************************
 */
 typedef void  (bu_gatt::*phndl)(const sdata& data);
@@ -149,7 +153,7 @@ int bu_gatt::on_sock_data(uint8_t code, const sdata& data)
             else if (mtu2 > _maxMtu)
                 mtu2 = _maxMtu;
             _mtu = mtu2;
-	    TRACE("mtu = " << int(_mtu));
+	    if(is_tracing(kTraceGory)) TRACE("mtu = " << int(_mtu));
             ret << uint8_t(ATT_OP_MTU_RESP);
             ret << uint16_t(htobs(_mtu));
         }
@@ -226,7 +230,7 @@ int bu_gatt::_group_q(const sdata& data, bybuff& ret)
     uint16_t hs = oa2t<uint16_t>(data.data,1);
     uint16_t he = oa2t<uint16_t>(data.data,3);
 
-    TRACE(__FUNCTION__ << " start h = " << int(hs) << "," << int(he) << "\n");
+    if(is_tracing(kTraceGory)) TRACE(__FUNCTION__ << " start h = " << int(hs) << "," << int(he) << "\n");
 
     Cguid    g(data.data+5);
     std::vector<GattSrv*>   srvs;
@@ -243,7 +247,7 @@ int bu_gatt::_group_q(const sdata& data, bybuff& ret)
 		if(e->_hndl<hs)continue;
 		        if(e->_type==subservices)
 		{
-	            TRACE("adding handler: " << int(e->_hndl) << " type = " << e->_type);
+	            if(is_tracing(kTraceGory)) TRACE("adding handler: " << int(e->_hndl) << " type = " << e->_type);
 		    srvs.push_back((GattSrv*)e);
 		}
 	}
@@ -261,13 +265,13 @@ int bu_gatt::_group_q(const sdata& data, bybuff& ret)
 
         ret << uint8_t(ATT_OP_READ_BY_GROUP_RESP);
         ret << uint8_t(lengthPerService);
-        TRACE("writing service:" << elems );
+        if(is_tracing(kTraceGory)) TRACE("writing service:" << elems );
         for(const auto& ps : srvs)
         {
             ret << uint16_t(ps->_hndl);
             ret << uint16_t(ps->_lasthndl);
 
-            TRACE(" adding service " << std::hex << int(ps->_hndl) << std::dec<<"\n");
+            if(is_tracing(kTraceGory)) TRACE(" adding service " << std::hex << int(ps->_hndl) << std::dec<<"\n");
             ret << ps->_cuid;
 
             if(--elems==0)
@@ -298,7 +302,7 @@ int bu_gatt::_type_q(const sdata& data, bybuff& ret)
 
 
 
-    TRACE(__FUNCTION__ << "start h = " << int(hs) << "," << int(he) << "\n");
+    if(is_tracing(kTraceGory)) TRACE(__FUNCTION__ << "start h = " << int(hs) << "," << int(he) << "\n");
 
     ret.reset();
     if (g.as16() == GATT_CHARAC_UUID)
@@ -312,7 +316,7 @@ int bu_gatt::_type_q(const sdata& data, bybuff& ret)
             if(e->_hndl<hs)continue;
             if(e->_type==H_CHR )
             {
-                TRACE("adding characteristics1: " << e->_hndl);
+                if(is_tracing(kTraceGory)) TRACE("adding characteristics1: " << e->_hndl);
                 chrs.push_back(e);
             }
         }
@@ -357,7 +361,7 @@ int bu_gatt::_type_q(const sdata& data, bybuff& ret)
         if(e->_hndl<hs)continue;
         if((e->_type==H_CHR || e->_type==H_DSC) && g == e->_cuid)
         {
-            TRACE("adding characteristics: " << e->_hndl);
+            if(is_tracing(kTraceGory)) TRACE("adding characteristics: " << e->_hndl);
             handler = e->_hndl;
             break;
         }
@@ -635,7 +639,7 @@ int bu_gatt::_find_type_q(const sdata& data, bybuff& ret)
     uint16_t hs = oa2t<uint16_t>(data.data,1);
     uint16_t he = oa2t<uint16_t>(data.data,3);
 
-    TRACE(__FUNCTION__ << "start h = " << int(hs) << "," << int(he) << "\n");
+    if(is_tracing(kTraceGory)) TRACE(__FUNCTION__ << "start h = " << int(hs) << "," << int(he) << "\n");
 
     Cguid    uuid(data.data+5);
     uint16_t val16 = oa2t<uint16_t>(data.data,3);

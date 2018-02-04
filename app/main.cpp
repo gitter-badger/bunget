@@ -43,8 +43,9 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <stropts.h>
-#include <libbunget.h>
+#include "libbunget.h"
 #include "crypto.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -123,6 +124,8 @@ private:
 */
 int main(int n, char* v[])
 {
+    printf("Tracing at: %d\n", get_trace_level());
+
     std::cout << LIBBUNGET_VERSION_STRING << "\n";
     if(n==1)
     {
@@ -142,8 +145,6 @@ int main(int n, char* v[])
     int srdel = 0;
     if(n==3)
         srdel = atoi(v[2]);
-
-
 
     try{
         // leave name empty for 'hostname'
@@ -247,7 +248,7 @@ bool my_proc::initHciDevice(int devid, const char* devn)
 */
 bool my_proc::onSpin(IServer* ps, uint16_t notyUuid)
 {
-    if(_kbhit()){
+    if(_kbhit()) {
         if(getchar()=='q')
         return false;
     }

@@ -33,4 +33,5 @@ add_library(bungetLib STATIC ascon.cpp
     rfcomm_socket.cpp
     sco_socket.cpp
     secmanp.cpp
-    uguid.cpp)
+    uguid.cpp
+    trace.cpp)

@@ -20,6 +20,10 @@
 #include "bu_gatt.h"
 #include "hci_config.h"
 
+#ifndef TRACE_H_
+#include "trace.h"
+#endif
+
 #define MIN_NOTY_INTERVAL    128  // for hci USB
 // #define MIN_NOTY_INTERVAL    64   // for hci UART
 
@@ -440,7 +444,7 @@ bool SrvDevice::onSpin()
             _curnoty = _poolNextNotyHndl();
             if(_curnoty)
             {
-                TRACE("Notify Enabled for:" << std::hex << int(_curnoty) << std::dec);
+                if(is_tracing(kTraceGory)) TRACE("Notify Enabled for:" << std::hex << int(_curnoty) << std::dec);
             }
             rv = _cb_proc->onSpin(this, _curnoty);
             _notytime = ct;

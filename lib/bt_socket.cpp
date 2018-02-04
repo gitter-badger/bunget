@@ -15,6 +15,9 @@
 #include "hci_socket.h"
 #include "bu_hci.h"
 #include "libbungetpriv.h"
+#ifndef TRACE_H_
+#include "trace.h"
+#endif
 
 /****************************************************************************************
 */
@@ -58,7 +61,7 @@ int bt_socket:: writeocts(const uint8_t* buffer, int sizeb)
 
     bybuff  data(buffer,sizeb);
     int r = ::write(this->_sock, buffer, sizeb);
-    TRACE("\n<--[" <<int(data.length())<<"/"<<r<<"]" << data.to_string());
+    if(is_tracing(kTraceGory)) TRACE("\n<--[" <<int(data.length())<<"/"<<r<<"]" << data.to_string());
     ::fsync(this->_sock);
 	return r;
 }
